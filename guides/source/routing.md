@@ -36,7 +36,7 @@ the request is dispatched to the `patients` controller's `show` action with `{ i
 
 ### Generating Paths and URLs from Code
 
-You can also generate paths and URLs.  If the route above is modified to be:
+You can also generate paths and URLs. If the route above is modified to be:
 
 ```ruby
 get '/patients/:id', to: 'patients#show', as: 'patient'
@@ -136,6 +136,12 @@ Sometimes, you have a resource that clients always look up without referencing a
 
 ```ruby
 get 'profile', to: 'users#show'
+```
+
+Passing a `String` to `match` will expect a `controller#action` format, while passing a `Symbol` will map directly to an action:
+
+```ruby
+get 'profile', to: :show
 ```
 
 This resourceful route:
@@ -797,7 +803,7 @@ You should put the `root` route at the top of the file, because it is the most p
 
 NOTE: The `root` route only routes `GET` requests to the action.
 
-You can also use root inside namespaces and scopes as well.  For example:
+You can also use root inside namespaces and scopes as well. For example:
 
 ```ruby
 namespace :admin do
@@ -851,7 +857,7 @@ resources :user_permissions, controller: 'admin/user_permissions'
 This will route to the `Admin::UserPermissions` controller.
 
 NOTE: Only the directory notation is supported. Specifying the
-controller with ruby constant notation (eg. `:controller =>
+controller with Ruby constant notation (eg. `:controller =>
 'Admin::UserPermissions'`) can lead to routing problems and results in
 a warning.
 

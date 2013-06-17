@@ -91,7 +91,7 @@ The primary operation of `Model.find(options)` can be summarized as:
 
 ### Retrieving a Single Object
 
-Active Record provides five different ways of retrieving a single object.
+Active Record provides several different ways of retrieving a single object.
 
 #### Using a Primary Key
 
@@ -687,6 +687,10 @@ The SQL that would be executed:
 
 ```sql
 SELECT * FROM posts WHERE id > 10 LIMIT 20
+
+# Original query without `except`
+SELECT * FROM posts WHERE id > 10 ORDER BY id asc LIMIT 20
+
 ```
 
 ### `unscope`
@@ -707,7 +711,7 @@ Post.order('id DESC').limit(20).unscope(:order, :limit) = Post.all
 You can additionally unscope specific where clauses. For example:
 
 ```ruby
-Post.where(:id => 10).limit(1).unscope(:where => :id, :limit).order('id DESC') = Post.order('id DESC')
+Post.where(:id => 10).limit(1).unscope(where: :id, :limit).order('id DESC') = Post.order('id DESC')
 ```
 
 ### `only`
@@ -722,6 +726,10 @@ The SQL that would be executed:
 
 ```sql
 SELECT * FROM posts WHERE id > 10 ORDER BY id DESC
+
+# Original query without `only`
+SELECT "posts".* FROM "posts" WHERE (id > 10) ORDER BY id desc LIMIT 20
+
 ```
 
 ### `reorder`
@@ -732,7 +740,7 @@ The `reorder` method overrides the default scope order. For example:
 class Post < ActiveRecord::Base
   ..
   ..
-  has_many :comments, order: 'posted_at DESC'
+  has_many :comments, -> { order('posted_at DESC') }
 end
 
 Post.find(10).comments.reorder('name')
@@ -1202,6 +1210,7 @@ class User < ActiveRecord::Base
   scope :active, -> { where state: 'active' }
   scope :inactive, -> { where state: 'inactive' }
 end
+```
 
 ```ruby
 User.active.inactive
@@ -1229,7 +1238,7 @@ One important caveat is that `default_scope` will be overridden by
 
 ```ruby
 class User < ActiveRecord::Base
-  default_scope  { where state: 'pending' }
+  default_scope { where state: 'pending' }
   scope :active, -> { where state: 'active' }
   scope :inactive, -> { where state: 'inactive' }
 end
@@ -1300,6 +1309,11 @@ Client.unscoped {
 
 Dynamic Finders
 ---------------
+
+NOTE: Dynamic finders have been deprecated in Rails 4.0 and will be
+removed in Rails 4.1. The best practice is to use Active Record scopes
+instead. You can find the deprecation gem at
+https://github.com/rails/activerecord-deprecated_finders
 
 For every field (also known as an attribute) you define in your table, Active Record provides a finder method. If you have a field called `first_name` on your `Client` model for example, you get `find_by_first_name` for free from Active Record. If you have a `locked` field on the `Client` model, you also get `find_by_locked` and methods.
 

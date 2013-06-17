@@ -327,6 +327,16 @@ class DateTimeExtCalculationsTest < ActiveSupport::TestCase
     assert_equal 946684800, DateTime.civil(1999,12,31,19,0,0,Rational(-5,24)).to_i
   end
 
+  def test_usec
+    assert_equal 0, DateTime.civil(2000).usec
+    assert_equal 500000, DateTime.civil(2000, 1, 1, 0, 0, Rational(1,2)).usec
+  end
+
+  def test_nsec
+    assert_equal 0, DateTime.civil(2000).nsec
+    assert_equal 500000000, DateTime.civil(2000, 1, 1, 0, 0, Rational(1,2)).nsec
+  end
+
   protected
     def with_env_tz(new_tz = 'US/Eastern')
       old_tz, ENV['TZ'] = ENV['TZ'], new_tz
@@ -334,11 +344,4 @@ class DateTimeExtCalculationsTest < ActiveSupport::TestCase
     ensure
       old_tz ? ENV['TZ'] = old_tz : ENV.delete('TZ')
     end
-end
-
-class DateTimeExtBehaviorTest < ActiveSupport::TestCase
-  def test_compare_with_infinity
-    assert_equal(-1, DateTime.now <=> Float::INFINITY)
-    assert_equal(1, DateTime.now <=> -Float::INFINITY)
-  end
 end

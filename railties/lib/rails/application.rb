@@ -93,6 +93,7 @@ module Rails
     # dispatches the request to the underlying middleware stack.
     def call(env)
       env["ORIGINAL_FULLPATH"] = build_original_fullpath(env)
+      env["ORIGINAL_SCRIPT_NAME"] = env["SCRIPT_NAME"]
       super(env)
     end
 
@@ -206,9 +207,7 @@ module Rails
     end
 
     # Initialize the application passing the given group. By default, the
-    # group is :default but sprockets precompilation passes group equals
-    # to assets if initialize_on_precompile is false to avoid booting the
-    # whole app.
+    # group is :default
     def initialize!(group=:default) #:nodoc:
       raise "Application has been already initialized." if @initialized
       run_initializers(group, self)

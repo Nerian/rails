@@ -1,8 +1,8 @@
 module ActionView
   module Helpers
-    module Tags
-      module CollectionHelpers
-        class Builder
+    module Tags # :nodoc:
+      module CollectionHelpers # :nodoc:
+        class Builder # :nodoc:
           attr_reader :object, :text, :value
 
           def initialize(template_object, object_name, method_name, object,
@@ -73,8 +73,9 @@ module ActionView
             value = value_for_collection(item, @value_method)
             text  = value_for_collection(item, @text_method)
             default_html_options = default_html_options_for_collection(item, value)
+            additional_html_options = option_html_attributes(item)
 
-            yield item, value, text, default_html_options
+            yield item, value, text, default_html_options.merge(additional_html_options)
           end.join.html_safe
         end
       end

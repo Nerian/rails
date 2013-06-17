@@ -64,7 +64,7 @@ YAML-formatted fixtures are a very human-friendly way to describe your sample da
 Here's a sample YAML fixture file:
 
 ```yaml
-# lo & behold!  I am a YAML comment!
+# lo & behold! I am a YAML comment!
 david:
  name: David Heinemeier Hansson
  birthday: 1979-10-15
@@ -85,8 +85,8 @@ ERB allows you to embed Ruby code within templates. The YAML fixture format is p
 ```erb
 <% 1000.times do |n| %>
 user_<%= n %>:
-  username: <%= "user%03d" % n %>
-  email: <%= "user%03d@example.com" % n %>
+  username: <%= "user#{n}" %>
+  email: <%= "user#{n}@example.com" %>
 <% end %>
 ```
 
@@ -128,12 +128,12 @@ When you use `rails generate scaffold`, for a resource among other things it cre
 $ rails generate scaffold post title:string body:text
 ...
 create  app/models/post.rb
-create  test/unit/post_test.rb
+create  test/models/post_test.rb
 create  test/fixtures/posts.yml
 ...
 ```
 
-The default test stub in `test/unit/post_test.rb` looks like this:
+The default test stub in `test/models/post_test.rb` looks like this:
 
 ```ruby
 require 'test_helper'
@@ -159,9 +159,10 @@ class PostTest < ActiveSupport::TestCase
 
 The `PostTest` class defines a _test case_ because it inherits from `ActiveSupport::TestCase`. `PostTest` thus has all the methods available from `ActiveSupport::TestCase`. You'll see those methods a little later in this guide.
 
-Any method defined within a `Test::Unit` test case that begins with `test` (case sensitive) is simply called a test. So, `test_password`, `test_valid_password` and `testValidPassword` all are legal test names and are run automatically when the test case is run.
+Any method defined within a class inherited from `MiniTest::Unit::TestCase`
+(which is the superclass of `ActiveSupport::TestCase`) that begins with `test` (case sensitive) is simply called a test. So, `test_password`, `test_valid_password` and `testValidPassword` all are legal test names and are run automatically when the test case is run.
 
-Rails adds a `test` method that takes a test name and a block. It generates a normal `Test::Unit` test with method names prefixed with `test_`. So,
+Rails adds a `test` method that takes a test name and a block. It generates a normal `MiniTest::Unit` test with method names prefixed with `test_`. So,
 
 ```ruby
 test "the truth" do
@@ -346,31 +347,38 @@ NOTE: The execution of each test method stops as soon as any error or an asserti
 
 Ideally, you would like to include a test for everything which could possibly break. It's a good practice to have at least one test for each of your validations and at least one test for every method in your model.
 
-### Assertions Available
+### Available Assertions
 
 By now you've caught a glimpse of some of the assertions that are available. Assertions are the worker bees of testing. They are the ones that actually perform the checks to ensure that things are going as planned.
 
-There are a bunch of different types of assertions you can use. Here's the complete list of assertions that ship with `test/unit`, the default testing library used by Rails. The `[msg]` parameter is an optional string message you can specify to make your test failure messages clearer. It's not required.
+There are a bunch of different types of assertions you can use.
+Here's an extract of the assertions you can use with `minitest`, the default testing library used by Rails. The `[msg]` parameter is an optional string message you can specify to make your test failure messages clearer. It's not required.
 
 | Assertion                                                        | Purpose |
 | ---------------------------------------------------------------- | ------- |
-| `assert( boolean, [msg] )`                                       | Ensures that the object/expression is true.|
+| `assert( test, [msg] )`                                          | Ensures that `test` is true.|
+| `refute( test, [msg] )`                                          | Ensures that `test` is false.|
 | `assert_equal( expected, actual, [msg] )`                        | Ensures that `expected == actual` is true.|
-| `assert_not_equal( expected, actual, [msg] )`                    | Ensures that `expected != actual` is true.|
+| `refute_equal( expected, actual, [msg] )`                        | Ensures that `expected != actual` is true.|
 | `assert_same( expected, actual, [msg] )`                         | Ensures that `expected.equal?(actual)` is true.|
-| `assert_not_same( expected, actual, [msg] )`                     | Ensures that `!expected.equal?(actual)` is true.|
+| `refute_same( expected, actual, [msg] )`                         | Ensures that `expected.equal?(actual)` is false.|
 | `assert_nil( obj, [msg] )`                                       | Ensures that `obj.nil?` is true.|
-| `assert_not_nil( obj, [msg] )`                                   | Ensures that `!obj.nil?` is true.|
+| `refute_nil( obj, [msg] )`                                       | Ensures that `obj.nil?` is false.|
 | `assert_match( regexp, string, [msg] )`                          | Ensures that a string matches the regular expression.|
-| `assert_no_match( regexp, string, [msg] )`                       | Ensures that a string doesn't match the regular expression.|
-| `assert_in_delta( expecting, actual, delta, [msg] )`             | Ensures that the numbers `expecting` and `actual` are within `delta` of each other.|
+| `refute_match( regexp, string, [msg] )`                          | Ensures that a string doesn't match the regular expression.|
+| `assert_in_delta( expecting, actual, [delta], [msg] )`           | Ensures that the numbers `expected` and `actual` are within `delta` of each other.|
+| `refute_in_delta( expecting, actual, [delta], [msg] )`           | Ensures that the numbers `expected` and `actual` are not within `delta` of each other.|
 | `assert_throws( symbol, [msg] ) { block }`                       | Ensures that the given block throws the symbol.|
-| `assert_raise( exception1, exception2, ... ) { block }`          | Ensures that the given block raises one of the given exceptions.|
+| `assert_raises( exception1, exception2, ... ) { block }`         | Ensures that the given block raises one of the given exceptions.|
 | `assert_nothing_raised( exception1, exception2, ... ) { block }` | Ensures that the given block doesn't raise one of the given exceptions.|
-| `assert_instance_of( class, obj, [msg] )`                        | Ensures that `obj` is of the `class` type.|
+| `assert_instance_of( class, obj, [msg] )`                        | Ensures that `obj` is an instance of `class`.|
+| `refute_instance_of( class, obj, [msg] )`                        | Ensures that `obj` is not an instance of `class`.|
 | `assert_kind_of( class, obj, [msg] )`                            | Ensures that `obj` is or descends from `class`.|
-| `assert_respond_to( obj, symbol, [msg] )`                        | Ensures that `obj` has a method called `symbol`.|
-| `assert_operator( obj1, operator, obj2, [msg] )`                 | Ensures that `obj1.operator(obj2)` is true.|
+| `refute_kind_of( class, obj, [msg] )`                            | Ensures that `obj` is not an instance of `class` and is not descending from it.|
+| `assert_respond_to( obj, symbol, [msg] )`                        | Ensures that `obj` responds to `symbol`.|
+| `refute_respond_to( obj, symbol, [msg] )`                        | Ensures that `obj` does not respond to `symbol`.|
+| `assert_operator( obj1, operator, [obj2], [msg] )`               | Ensures that `obj1.operator(obj2)` is true.|
+| `refute_operator( obj1, operator, [obj2], [msg] )`               | Ensures that `obj1.operator(obj2)` is false.|
 | `assert_send( array, [msg] )`                                    | Ensures that executing the method listed in `array[1]` on the object in `array[0]` with the parameters of `array[2 and up]` is true. This one is weird eh?|
 | `flunk( [msg] )`                                                 | Ensures failure. This is useful to explicitly mark a test that isn't finished yet.|
 
@@ -388,7 +396,7 @@ Rails adds some custom assertions of its own to the `test/unit` framework:
 | `assert_no_difference(expressions, message = nil, &amp;block)`                    | Asserts that the numeric result of evaluating an expression is not changed before and after invoking the passed in block.|
 | `assert_recognizes(expected_options, path, extras={}, message=nil)`               | Asserts that the routing of the given path was handled correctly and that the parsed options (given in the expected_options hash) match path. Basically, it asserts that Rails recognizes the route given by expected_options.|
 | `assert_generates(expected_path, options, defaults={}, extras = {}, message=nil)` | Asserts that the provided options can be used to generate the provided path. This is the inverse of assert_recognizes. The extras parameter is used to tell the request the names and values of additional request parameters that would be in a query string. The message parameter allows you to specify a custom error message for assertion failures.|
-| `assert_response(type, message = nil)`                                            | Asserts that the response comes with a specific status code. You can specify `:success` to indicate 200-299,  `:redirect` to indicate 300-399, `:missing` to indicate 404, or `:error` to match the 500-599 range|
+| `assert_response(type, message = nil)`                                            | Asserts that the response comes with a specific status code. You can specify `:success` to indicate 200-299, `:redirect` to indicate 300-399, `:missing` to indicate 404, or `:error` to match the 500-599 range|
 | `assert_redirected_to(options = {}, message=nil)`                                 | Assert that the redirection options passed in match those of the redirect called in the latest action. This match can be partial, such that `assert_redirected_to(controller: "weblog")` will also match the redirection of `redirect_to(controller: "weblog", action: "show")` and so on.|
 | `assert_template(expected = nil, message=nil)`                                    | Asserts that the request was rendered with the appropriate template file.|
 
@@ -475,7 +483,7 @@ NOTE: Functional tests do not verify whether the specified request type should b
 
 ### The Four Hashes of the Apocalypse
 
-After a request has been made by using one of the 5 methods (`get`, `post`, etc.) and processed, you will have 4 Hash objects ready for use:
+After a request has been made using one of the 6 methods (`get`, `post`, etc.) and processed, you will have 4 Hash objects ready for use:
 
 * `assigns` - Any objects that are stored as instance variables in actions for use in views.
 * `cookies` - Any cookies that are set.
@@ -614,11 +622,11 @@ The `assert_select` assertion is quite powerful. For more advanced usage, refer 
 
 There are more assertions that are primarily used in testing views:
 
-| Assertion                                                  | Purpose |
-| ---------------------------------------------------------- | ------- |
-| `assert_select_email`                                      | Allows you to make assertions on the body of an e-mail. |
-| `assert_select_encoded`                                    | Allows you to make assertions on encoded HTML. It does this by un-encoding the contents of each element and then calling the block with all the un-encoded elements.|
-| `css_select(selector)`  or `css_select(element, selector)` | Returns an array of all the elements selected by the _selector_. In the second variant it first matches the base _element_ and tries to match the _selector_ expression on any of its children. If there are no matches both variants return an empty array.|
+| Assertion                                                 | Purpose |
+| --------------------------------------------------------- | ------- |
+| `assert_select_email`                                     | Allows you to make assertions on the body of an e-mail. |
+| `assert_select_encoded`                                   | Allows you to make assertions on encoded HTML. It does this by un-encoding the contents of each element and then calling the block with all the un-encoded elements.|
+| `css_select(selector)` or `css_select(element, selector)` | Returns an array of all the elements selected by the _selector_. In the second variant it first matches the base _element_ and tries to match the _selector_ expression on any of its children. If there are no matches both variants return an empty array.|
 
 Here's an example of using `assert_select_email`:
 
@@ -714,17 +722,17 @@ class UserFlowsTest < ActionDispatch::IntegrationTest
 
   test "login and browse site" do
 
-    # User avs logs in
-    avs = login(:david)
+    # User david logs in
+    david = login(:david)
     # User guest logs in
     guest = login(:guest)
 
     # Both are now available in different sessions
-    assert_equal 'Welcome david!', avs.flash[:notice]
+    assert_equal 'Welcome david!', david.flash[:notice]
     assert_equal 'Welcome guest!', guest.flash[:notice]
 
-    # User avs can browse site
-    avs.browses_site
+    # User david can browse site
+    david.browses_site
     # User guest can browse site as well
     guest.browses_site
 
@@ -759,8 +767,8 @@ Rake Tasks for Running your Tests
 
 You don't need to set up and run your tests by hand on a test-by-test basis. Rails comes with a number of commands to help in testing. The table below lists all commands that come along in the default Rakefile when you initiate a Rails project.
 
-| Tasks                    | Description |
-| ------------------------ | ----------- |
+| Tasks                   | Description |
+| ----------------------- | ----------- |
 | `rake test`             | Runs all unit, functional and integration tests. You can also simply run `rake test` as Rails will run all the tests by default|
 | `rake test:controllers` | Runs all the controller tests from `test/controllers`|
 | `rake test:functionals` | Runs all the functional tests from `test/controllers`, `test/mailers`, and `test/functional`|
@@ -770,13 +778,6 @@ You don't need to set up and run your tests by hand on a test-by-test basis. Rai
 | `rake test:models`      | Runs all the model tests from `test/models`|
 | `rake test:units`       | Runs all the unit tests from `test/models`, `test/helpers`, and `test/unit`|
 
-There're also some test commands which you can initiate by running rake tasks:
-
-| Tasks                    | Description |
-| ------------------------ | ----------- |
-| `rake test`              | Runs all unit, functional and integration tests. You can also simply run `rake` as the _test_ target is the default.|
-| `rake test:recent`       | Tests recent changes|
-| `rake test:uncommitted`  | Runs all the tests which are uncommitted. Supports Subversion and Git|
 
 Brief Note About `MiniTest`
 -----------------------------

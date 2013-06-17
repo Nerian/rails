@@ -445,6 +445,16 @@ class TimeWithZoneTest < ActiveSupport::TestCase
     assert_equal 0, twz.usec
   end
 
+  def test_usec_returns_sec_fraction_when_datetime_is_wrapped
+    twz = ActiveSupport::TimeWithZone.new(DateTime.civil(2000, 1, 1, 0, 0, Rational(1,2)), @time_zone)
+    assert_equal 500000, twz.usec
+  end
+
+  def test_nsec_returns_sec_fraction_when_datetime_is_wrapped
+    twz = ActiveSupport::TimeWithZone.new(DateTime.civil(2000, 1, 1, 0, 0, Rational(1,2)), @time_zone)
+    assert_equal 500000000, twz.nsec
+  end
+
   def test_utc_to_local_conversion_saves_period_in_instance_variable
     assert_nil @twz.instance_variable_get('@period')
     @twz.time
@@ -1117,14 +1127,4 @@ class TimeWithZoneMethodsForString < ActiveSupport::TestCase
     ensure
       Time.zone = old_tz
     end
-end
-
-class TimeWithZoneExtBehaviorTest < ActiveSupport::TestCase
-  def test_compare_with_infinity
-    time_zone = ActiveSupport::TimeZone['Eastern Time (US & Canada)']
-    twz = ActiveSupport::TimeWithZone.new(Time.now, time_zone)
-
-    assert_equal(-1, twz <=> Float::INFINITY)
-    assert_equal(1, twz <=> -Float::INFINITY)
-  end
 end

@@ -75,7 +75,7 @@ The query string strategy has several disadvantages:
 2. **The file name can change between nodes in multi-server environments.**<br />
     The default query string in Rails 2.x is based on the modification time of the files. When assets are deployed to a cluster, there is no guarantee that the timestamps will be the same, resulting in different values being used depending on which server handles the request.
 3. **Too much cache invalidation**<br />
-    When static assets are deployed with each new release of code, the mtime of _all_ these files changes, forcing all remote clients to fetch them again, even when the content of those assets has not changed.
+    When static assets are deployed with each new release of code, the mtime(time of last modification) of _all_ these files changes, forcing all remote clients to fetch them again, even when the content of those assets has not changed.
 
 Fingerprinting fixes these problems by avoiding query strings, and by ensuring that filenames are consistent based on their content.
 
@@ -416,21 +416,10 @@ You can call this task on the server during deployment to create compiled versio
 The rake task is:
 
 ```bash
-$ bundle exec rake assets:precompile
+$ RAILS_ENV=production bundle exec rake assets:precompile
 ```
 
-For faster asset precompiles, you can partially load your application by setting
-`config.assets.initialize_on_precompile` to false in `config/application.rb`, though in that case templates
-cannot see application objects or methods. **Heroku requires this to be false.**
-
-WARNING: If you set `config.assets.initialize_on_precompile` to false, be sure to
-test `rake assets:precompile` locally before deploying. It may expose bugs where
-your assets reference application objects or methods, since those are still
-in scope in development mode regardless of the value of this flag. Changing this flag also affects
-engines. Engines can define assets for precompilation as well. Since the complete environment is not loaded,
-engines (or other gems) will not be loaded, which can cause missing assets.
-
-Capistrano (v2.8.0 and above) includes a recipe to handle this in deployment. Add the following line to `Capfile`:
+Capistrano (v2.15.1 and above) includes a recipe to handle this in deployment. Add the following line to `Capfile`:
 
 ```ruby
 load 'deploy/assets'
@@ -450,7 +439,7 @@ The default matcher for compiling files includes `application.js`, `application.
 
 NOTE. The matcher (and other members of the precompile array; see below) is applied to final compiled file names. This means that anything that compiles to JS/CSS is excluded, as well as raw JS/CSS files; for example, `.coffee` and `.scss` files are **not** automatically included as they compile to JS/CSS.
 
-If you have other manifests or individual stylesheets and JavaScript files to include, you can add them to the `precompile` array:
+If you have other manifests or individual stylesheets and JavaScript files to include, you can add them to the `precompile` array in `config/application.rb`:
 
 ```ruby
 config.assets.precompile += ['admin.js', 'admin.css', 'swfObject.js']
@@ -459,7 +448,7 @@ config.assets.precompile += ['admin.js', 'admin.css', 'swfObject.js']
 Or you can opt to precompile all assets with something like this:
 
 ```ruby
-# config/environments/production.rb
+# config/application.rb
 config.assets.precompile << Proc.new do |path|
   if path =~ /\.(css|js)\z/
     full_path = Rails.application.assets.resolve(path).to_path
@@ -547,35 +536,7 @@ This directive is available if the core module that provides this feature was co
 
 If you're compiling nginx with Phusion Passenger you'll need to pass that option when prompted.
 
-Apache is also able to serve the [gzipped](http://en.wikipedia.org/wiki/Gzip) version of your assets; however, it requires a bit more work:
-
-```apache
-<LocationMatch "^/assets/.*$">
-  Header unset ETag
-  FileETag None
-
-  # RFC says only cache for 1 year
-  ExpiresActive On
-  ExpiresDefault "access plus 1 year"
-
-  RewriteEngine	On
-  RewriteCond %{HTTP:Accept-Encoding} gzip
-  RewriteCond %{HTTP_USER_AGENT} !Konqueror
-  RewriteCond %{REQUEST_FILENAME}.gz -f
-  RewriteRule ^(.+).(css|js)$ $1.$2.gz [QSA,L]
-</LocationMatch>
-
-<FilesMatch \.css\.gz>
-  ForceType text/css
-</FilesMatch>
-
-<FilesMatch \.js\.gz>
-  ForceType application/javascript
-</FilesMatch>
-AddEncoding gzip .gz
-```
-
-NOTE: You will need to make sure `mod_headers`, `mod_mime` and `mod_rewrite` are loaded; otherwise, the above configuration will fail.
+A robust configuration for Apache is possible but tricky; please Google around. (Or help update this Guide if you have a good example configuration for Apache.)
 
 ### Local Precompilation
 
@@ -598,15 +559,7 @@ In `config/environments/development.rb`, place the following line:
 config.assets.prefix = "/dev-assets"
 ```
 
-You will also need this in application.rb:
-
-```ruby
-config.assets.initialize_on_precompile = false
-```
-
 The `prefix` change makes Rails use a different URL for serving assets in development mode, and pass all requests to Sprockets. The prefix is still set to `/assets` in the production environment. Without this change, the application would serve the precompiled assets from `public/assets` in development, and you would not see any local changes until you compile assets again.
-
-The `initialize_on_precompile` change tells the precompile task to run without invoking Rails. This is because the precompile task runs in production mode by default, and will attempt to connect to your specified production database. Please note that you cannot have code in pipeline files that relies on Rails resources (such as the database) when compiling locally with this option.
 
 You will also need to ensure that any compressors or minifiers are available on your development system.
 
@@ -735,7 +688,7 @@ config.assets.cache_store = :memory_store
 The options accepted by the assets cache store are the same as the application's cache store.
 
 ```ruby
-config.assets.cache_store = :memory_store, { :size => 32.megabytes }
+config.assets.cache_store = :memory_store, { size: 32.megabytes }
 ```
 
 Adding Assets to Your Gems
@@ -843,18 +796,16 @@ end
 If you use the `assets` group with Bundler, please make sure that your `config/application.rb` has the following Bundler require statement:
 
 ```ruby
-if defined?(Bundler)
-  # If you precompile assets before deploying to production, use this line
-  Bundler.require *Rails.groups(:assets => %w(development test))
-  # If you want your assets lazily compiled in production, use this line
-  # Bundler.require(:default, :assets, Rails.env)
-end
+# If you precompile assets before deploying to production, use this line
+Bundler.require *Rails.groups(:assets => %w(development test))
+# If you want your assets lazily compiled in production, use this line
+# Bundler.require(:default, :assets, Rails.env)
 ```
 
-Instead of the old Rails 3.0 version:
+Instead of the generated version:
 
 ```ruby
-# If you have a Gemfile, require the gems listed there, including any gems
+# Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
-Bundler.require(:default, Rails.env) if defined?(Bundler)
+Bundler.require(:default, Rails.env)
 ```
