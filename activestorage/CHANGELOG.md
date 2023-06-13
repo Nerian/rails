@@ -1,3 +1,36 @@
+*   Allows for configuring a custom prefix for Blob keys.
+
+    ```ruby
+    Rails.application.configure do
+      config.active_storage.blob_prefix = 'active_storage'
+    end
+    ```
+
+    This will store Blobs in a path like active_storage/<random_key>
+
+    You may also configure an additional level of prefix on each relation.
+
+    ```ruby
+    class User < ActiveRecord::Base
+      has_one_attached :avatar, prefix: 'avatars'
+    end
+    ```
+
+    This will store Blobs in a path like active_storage/avatars/<random_key>
+
+    Or even generate it using information on the record:
+
+    ```ruby
+    class User < ActiveRecord::Base
+      belongs_to :tenant
+      has_one_attached :avatar, prefix: -> (record, attachment) { record.tenant.name }
+    end
+    ```
+
+    This will store Blobs in a path like active_storage/account_1/<random_key>
+
+    *Gonzalo Rodríguez-Baltanás Díaz*
+
 *   Allow an ActiveStorage attachment to be removed via a form post
 
     Attachments can already be removed by updating the attachment to be nil such as:

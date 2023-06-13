@@ -10,6 +10,10 @@ module ActiveStorage
       def variants
         @variants ||= {}
       end
+
+      def prefix
+        options[:prefix]
+      end
     end
 
     # Holds all the metadata about a has_one_attached attachment as it was
