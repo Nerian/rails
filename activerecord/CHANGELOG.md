@@ -579,4 +579,8 @@
 
     *Myles Boone*
 
+*   'Undeclared attribute type for enum' now raises an ArgumentError instead of a RuntimeError
+
+    *Gonzalo Rodríguez-Baltanás Díaz*
+
 Please check [7-1-stable](https://github.com/rails/rails/blob/7-1-stable/activerecord/CHANGELOG.md) for previous changes.
