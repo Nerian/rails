@@ -1109,7 +1109,7 @@ class EnumTest < ActiveRecord::TestCase
       end
     end
 
-    error = assert_raises(RuntimeError) do
+    error = assert_raises(ArgumentError) do
       klass.type_for_attribute(:typeless_genre)
     end
     assert_match "Undeclared attribute type for enum 'typeless_genre' in Book", error.message
