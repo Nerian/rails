@@ -132,6 +132,19 @@ class ActiveStorage::AttachmentPrefixTest < ActiveSupport::TestCase
     end
   end
 
+  test "attaching files to a has_many_attached of a new record more than once uses the prefix for all of them" do
+    user = PrefixedUser.new(name: "Jason", group_id: 7)
+    user.highlights_with_prefix.attach fixture_file_upload("racecar.jpg")
+    user.highlights_with_prefix.attach fixture_file_upload("video.mp4")
+    user.save!
+
+    assert_equal 2, user.reload.highlights_with_prefix.count
+    user.highlights_with_prefix.each do |highlight|
+      assert_match(%r{\A7/#{TOKEN}\z}, highlight.key)
+      assert ActiveStorage::Blob.service.exist?(highlight.key)
+    end
+  end
+
   test "attaching a file calls the prefix proc with the attachable" do
     @user.resume_with_prefix.attach fixture_file_upload("report.pdf")
     assert_match(%r{\Apdf/#{TOKEN}\z}, @user.resume_with_prefix.key)
